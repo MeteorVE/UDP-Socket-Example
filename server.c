@@ -1,16 +1,22 @@
 #include <stdio.h>
-#include <string.h> // strerror
+#include <stdlib.h>
+#include <string.h>
 #include <netinet/in.h> 
 #include <errno.h>
-#include <unistd.h> // close
+#include <unistd.h> 
 
 #define DATA_BUFFER 5000
 #define PORT 7000
 
-int main () {    
+int main (int argc, char* argv[]) { 
     struct sockaddr_in server_addr, client_addr;
     int fd, ret_val;
     socklen_t addrlen = sizeof(client_addr); 
+
+    int port = PORT;  
+    if (argc ==2) {
+        port = atoi(argv[1]);
+    } 
 
     /* Create UDP socket */
     fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); 
@@ -22,7 +28,7 @@ int main () {
 
     /* Initialize the socket address structure */
     server_addr.sin_family = AF_INET;         
-    server_addr.sin_port = htons(PORT);     
+    server_addr.sin_port = htons(port);     
     server_addr.sin_addr.s_addr = INADDR_ANY; 
 
     /* Bind the socket */
@@ -46,13 +52,11 @@ int main () {
 
         ret_val = sendto(fd, buffer, DATA_BUFFER, 0, 
                     (struct sockaddr*)&client_addr, sizeof(struct sockaddr_in));
-        if (ret_val ==-1) {
-            perror("[Info] Error in sending message");
-            // continue;
-        }else{
+        if (ret_val != -1) {
             printf("[Info] Sent data (len %d bytes): %s\n", ret_val, buffer);
+        }else{
+            perror("[Error] Error in sending message");
         }
-        break;
     }
-
+    return 0;
 }
