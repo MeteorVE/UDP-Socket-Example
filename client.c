@@ -6,10 +6,7 @@
 #include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <netdb.h> 
-#include <unistd.h> // close
-
-// #define DATA_BUFFER "Mona Lisa was painted by Leonardo da Vinci"
-// #define PORT 7000
+#include <unistd.h>
 
 #define MAX_RETRY 10
 #define MULTIPLIER 2
@@ -49,10 +46,6 @@ int main (int argc, char* argv[]) {
         close(sockfd);
         return 1;
     }
-    // struct hostent *host; /* need netdb.h for this  */
-    // host = gethostbyname("127.0.0.1");
-    // server_addr.sin_addr = *((struct in_addr *)host->h_addr);
-    
 
     /* Send some data */
     int retry = 0, wait_interval = 0;
@@ -69,14 +62,15 @@ int main (int argc, char* argv[]) {
             printf("[Info] Successfully sent data (len %d bytes): %s\n", ret_val, message);
         } else {
             printf("[Error] sendto() failed [%s]\n", strerror(errno));
+            continue;
         }
 
         FD_ZERO(&read_fds);
         FD_SET(sockfd, &read_fds);
         wait_interval = BASE_INTERVAL_MS * pow(MULTIPLIER, retry);
         wait_interval = (wait_interval > MAX_WAIT_INTERVAL_MS) ? MAX_WAIT_INTERVAL_MS : wait_interval;
-        printf("[Debug] wait_interval: %d\n", wait_interval);
-        if (wait_interval == MAX_WAIT_INTERVAL_MS) return 1;
+        printf("[Info] wait_interval: %d\n", wait_interval);
+            
         timeout.tv_sec = wait_interval/1000;
         timeout.tv_usec = wait_interval%1000 * 1000;  // microsecond -> millisecond
         int num_ready = select(sockfd + 1, &read_fds, NULL, NULL, &timeout);
@@ -86,7 +80,6 @@ int main (int argc, char* argv[]) {
             close(sockfd);
             exit(1);
         } else if (num_ready == 0) {
-            // 超時處理...
             printf("[Info] Timeout occurred, retry times: %d\n", retry);
         } else {
             if (FD_ISSET(sockfd, &read_fds)) {
@@ -98,17 +91,16 @@ int main (int argc, char* argv[]) {
                         (struct sockaddr *)&server_addr, &addrlen);
                 if (ret_val != -1) {
                     printf("[Info] Received data (len %d bytes): %s\n", ret_val, buffer);
-                    break;
+                    return 0;
                 } else {
                     printf("[Error] recvfrom() failed [%s]\n", strerror(errno));
                 }
             }
         }
-
         retry += 1;
     }
     
-    /* Last step: close the socket */
+    // Reach the max-retry
     close(sockfd);
-    return 0;
+    return 1;
 }
