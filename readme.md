@@ -7,6 +7,11 @@
 - 一個可以 echo 的 server (return same input)
 - 一個實作了 exponential backoff 的 client
 
+# Video 
+
+做了一個影片解說
+https://youtu.be/AOPiQLLH9y4
+
 # Env
 
 - 開發環境 : WSL + Debian 
