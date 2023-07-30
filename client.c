@@ -18,7 +18,7 @@ int main (int argc, char* argv[]) {
 
     if (argc != 4) {
         fprintf(stderr, "Usage: %s <server IP> <port> <message>\n", argv[0]);
-        return 1;
+        return 0;
     }
 
     const char* server_ip = argv[1];
@@ -33,7 +33,7 @@ int main (int argc, char* argv[]) {
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); 
     if (sockfd == -1) {
         fprintf(stderr, "[Error] socket failed [%s]\n", strerror(errno));
-        return -1;
+        return 0;
     }
     printf("[Info] Created a socket with fd: %d\n", sockfd);
     
@@ -44,7 +44,7 @@ int main (int argc, char* argv[]) {
     if (ret_val == -1) {
         fprintf(stderr, "[Error] inet_pton error\n");
         close(sockfd);
-        return 1;
+        return 0;
     }
 
     /* Send some data */
@@ -57,7 +57,6 @@ int main (int argc, char* argv[]) {
         /* Send message to server */
         ret_val = sendto(sockfd, message, strlen(message)+1, 0, 
             (struct sockaddr *)&server_addr, sizeof(struct sockaddr_in));
-        printf("ret_val: %d\n", ret_val);
         if (ret_val != -1) {
             printf("[Info] Successfully sent data (len %d bytes): %s\n", ret_val, message);
         } else {
@@ -78,7 +77,7 @@ int main (int argc, char* argv[]) {
         if (num_ready == -1) {
             perror("[Error] in select");
             close(sockfd);
-            exit(1);
+            return 0;
         } else if (num_ready == 0) {
             printf("[Info] Timeout occurred, retry times: %d\n", retry);
         } else {
@@ -91,7 +90,7 @@ int main (int argc, char* argv[]) {
                         (struct sockaddr *)&server_addr, &addrlen);
                 if (ret_val != -1) {
                     printf("[Info] Received data (len %d bytes): %s\n", ret_val, buffer);
-                    return 0;
+                    exit(0);
                 } else {
                     printf("[Error] recvfrom() failed [%s]\n", strerror(errno));
                 }
@@ -102,5 +101,5 @@ int main (int argc, char* argv[]) {
     
     // Reach the max-retry
     close(sockfd);
-    return 1;
+    exit(1);
 }
